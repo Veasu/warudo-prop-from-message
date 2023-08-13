@@ -45,6 +45,12 @@ namespace veasu.chathrow
       return outputData;
     }
 
+    [FlowInput]
+    public Continuation Enter() {
+      getProp();
+      return null;
+    }
+
     [FlowOutput]
     public Continuation OnPropFound;
 
@@ -54,26 +60,26 @@ namespace veasu.chathrow
 
     static System.Random rnd = new System.Random();
 
-    protected override void OnCreate() {
-      Watch<string>(nameof(message), (from, to) => {
-        if (to != null && choices.Count > 0 && Time.time > timer) {
-          var lowerCaseMessage = to.ToLower();
-          List<string> filteredChoices = new List<string>();
-          foreach (string str in lowerCaseMessage.Split(' ')) {
-            if (filteredChoices.Count >= maxProps) break;
-            filteredChoices.AddRange(choices.Where(prop => str.Equals(prop.Key)).Select(it => it.Value));
-          }
-          if (filteredChoices.Count > 0) {
-            outputData = filteredChoices[rnd.Next(filteredChoices.Count)];
-            InvokeFlow(nameof(OnPropFound));
-            timer = Time.time + timeoutAmount;
-          }
-          else {
-            outputData = null;
-          }
+    private void getProp() {
+      if (message != null && choices.Count > 0 && Time.time > timer) {
+        var lowerCaseMessage = message.ToLower();
+        List<string> filteredChoices = new List<string>();
+        foreach (string str in lowerCaseMessage.Split(' ')) {
+          if (filteredChoices.Count >= maxProps) break;
+          filteredChoices.AddRange(choices.Where(prop => str.Equals(prop.Key)).Select(it => it.Value));
         }
-      });
+        if (filteredChoices.Count > 0) {
+          outputData = filteredChoices[rnd.Next(filteredChoices.Count)];
+          InvokeFlow(nameof(OnPropFound));
+          timer = Time.time + timeoutAmount;
+        }
+        else {
+          outputData = null;
+        }
+      }
+    }
 
+    protected override void OnCreate() {
       Watch<float>(nameof(timeoutAmount), (from, to) => {
         timer -= (from - to);
       });
